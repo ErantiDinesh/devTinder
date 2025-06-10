@@ -1,38 +1,85 @@
 const express = require('express');
-
+const connectDB = require('./config/database')
 const app = express();
+const User = require('./models/user');
+
+app.use(express.json());
+
+app.post('/signup', async (req, res) => {
+
+  try {
+      const user = new User(req.body);
+      await user.save(); 
+    res.status(201).json({message: "user created successfully", user}); 
+  } catch (error) {
+    console.log("error in signup", error);
+    res.status(500).json({message: "Internal server error", error: error.message});
+  }})
 
 
+app.get('/user', async (req, res) => {
+    try {
+       const user = await User.findOne({emailId: req.emailId});
+       if (user?.length === 0) {
+        return res.status(404).json({message: "User not found"});
+       }
 
-app.use("/test", (req, res) => {
-    throw new Error("This is an error");
-    res.send("Hello from the server0");
-});
-
-app.use("/", (err, req, res, next) => {
-    if (err) {
-        res.send("Error occured");
+       res.status(200).json({message: "User found", user});
+    } catch (error) {
+        console.log("error in fetching user", error);
+        res.status(500).json({message: "Internal server error", error: error.message});
     }
 })
 
-app.use("/test/1", (req, res) => {
-    res.send("Hello from the server1");
-});
-
-app.use("/user", (req, res) => {
-    res.send("HAHAHAHA")
+app.get('/feed', async (req, res) => {
+    try {
+        const users = await User.find({});
+        if (users.length === 0) {
+            return res.status(404).json({message: "No users found"});
+        }
+        res.status(200).json({message: "Users found", users});
+    } catch (error) {
+        console.log("error in fetching users", error);
+        res.status(500).json({message: "Internal server error", error: error.message});
+    }
 })
 
-app.post("/user", (req, res) => {
-    res.send({name: "dinesh", age: "24"})
+app.patch('/user', async (req, res) => {
+    try {
+        const data = req.body.data;
+        const userId = req.body.userId;
+        const updatedData = await User.findByIdAndUpdate(userId, data);
+        if (!updatedData) {
+            return res.status(404).json({message: "User not found"});
+        }   
+        res.status(200).json({message: "User updated successfully", user: updatedData});
+    } catch (error) {
+        console.log("error in updating user", error);
+        res.status(500).json({message: "Internal server error", error: error.message});
+        
+    }
 })
 
+app.delete('/user', async (req, res) => {
+    try {
+        const {userId} = req.body;
+        const deleteUser = await User.findByIdAndDelete(userId);
+        if (!deleteUser) {
+            return res.status(404).json({message: "User not found"});
+        }   
+        res.status(200).json({message: "User deleted successfully", user: deleteUser});
+    } catch (error) {
+        console.log("error in deleting user", error);
+        res.status(500).json({message: "Internal server error", error: error.message});      
+    }
+    })
 
-app.use("/test1", (req, res) => {
-    res.send("Hello from the server test77");
-});
-
-
-app.listen(3000, () => {
-    console.log("Server running at port 3000");
+connectDB()
+.then(() => {
+    console.log("MongoDB connected successfully");
+    app.listen(7777, () => {
+    console.log("Server running at port 7777");
+}); })
+.catch((err) => {
+    console.error("MongoDB connection failed:", err);
 });
