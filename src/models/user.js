@@ -1,28 +1,68 @@
 const mongoose = require('mongoose');
+const validator = require('validator');
 
-const userSchema = new mongoose.Schema({
+const userSchema = new mongoose.Schema(
+    {
     firstName: {
         type: String,
-        required: true
+        required: true,
+        minLength: 4,
+        maxLength: 50
     },
     lastName: {
         type: String
     },
     emailId: {
         type: String,
+        lowercase: true,
+        trim: true,
         required: true, 
-        unique: true   
+        unique: true,
+        validate(value) {
+            if (!validator.isEmail(value)) {
+                throw new Error("Invalid email format: " + value)
+            }   
+        }   
     },
     password: {
-            type: String
+        type: String,
+        validate (value) {
+            if (! validator.isStrongPassword(value)) {
+                throw new Error("Password must be strong")
+            }
+        }
     },
     age: {
-        type: Number
+        type: Number,
+        min: 18
     },
     gender: {
-        type: String
+        type: String,
+        validate(value) {    //this function u can write for every one. when u try to insert a value in db, mongodb checks this shema, whether its throwing any error or not.
+            if (! ["male", "female", "other"].includes(value)) {
+                throw new Error("Invalid gender type")
+            }
+        }
+    },
+    photoUrl: {
+        type: String,
+        default: "https://static-00.iconduck.com/assets.00/avatar-default-icon-1975x2048-2mpk4u9k.png",
+        validate(value) {
+            if (!validator.isURL(value)) {
+                throw new Error("Invalid URL format: " + value)
+            }
+        }
+    },
+    about: {
+        type: String,
+        default: "This is a default about"
+    },
+    skills: {
+        type: [String]
     }
 
+}, {
+    timestamps: true
 })
 
 module.exports = mongoose.model("User", userSchema);

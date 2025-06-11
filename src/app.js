@@ -44,11 +44,23 @@ app.get('/feed', async (req, res) => {
     }
 })
 
-app.patch('/user', async (req, res) => {
+app.patch('/user/:userId', async (req, res) => {
     try {
         const data = req.body.data;
-        const userId = req.body.userId;
-        const updatedData = await User.findByIdAndUpdate(userId, data);
+        const userId = req.params?.userId;
+
+        const allowUpdates = ["firstName", "lastName", "age", "gender", "photoUrl", "about", "skills"];
+        const isUpdatedAllowed = Object.keys(data).every((key) => allowUpdates.includes(key));
+
+        if (!isUpdatedAllowed) {
+            return res.status(400).json({message: "Invalid update fields"});
+        }
+
+        if (data?.skills.length > 10) {
+            return res.status(400).json({message: "Skills cannot exceed 10 items"});
+        }
+
+        const updatedData = await User.findByIdAndUpdate(userId, data, {runValidators:true, new: true});
         if (!updatedData) {
             return res.status(404).json({message: "User not found"});
         }   
