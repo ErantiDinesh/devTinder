@@ -9,7 +9,8 @@ const userSchema = new mongoose.Schema(
         type: String,
         required: true,
         minLength: 4,
-        maxLength: 50
+        maxLength: 50,
+        index: true,
     },
     lastName: {
         type: String
@@ -19,7 +20,7 @@ const userSchema = new mongoose.Schema(
         lowercase: true,
         trim: true,
         required: true, 
-        unique: true,
+        unique: true,  // this is equal to index: true. mongodb indexes if there is unique: true.
         validate(value) {
             if (!validator.isEmail(value)) {
                 throw new Error("Invalid email format: " + value)
@@ -77,7 +78,6 @@ userSchema.methods.validatePassword = function (password) {
     const user = this;
     const isPAsswordMatch = bcrypt.compare(password, user.password);
     return isPAsswordMatch;
-
 }
 
 module.exports = mongoose.model("User", userSchema);

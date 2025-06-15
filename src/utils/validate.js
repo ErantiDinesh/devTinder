@@ -16,4 +16,19 @@ const validateSignupData = (data) => {
 
 }
 
-module.exports = {validateSignupData}
+const validateEditProfileData = (data) => {
+    console.log("upadteDAta", data)
+
+    const allowUpdates = ["firstName", "lastName", "age", "gender", "photoUrl", "about", "skills"];
+    const isUpdatedAllowed = Object.keys(data).every((key) => allowUpdates.includes(key));
+
+    if (!isUpdatedAllowed) {
+       throw new Error("Invalid update fields");
+        }
+
+    if (Array.isArray(data.skills) && data?.skills.length > 10) {
+        throw new Error("Skills cannot exceed 10 items");
+        }
+}
+
+module.exports = {validateSignupData, validateEditProfileData}
