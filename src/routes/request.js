@@ -50,4 +50,40 @@ router.post ('/request/send/:status/:toUserId', async (req, res) => {
     }
 })
 
+router.post('/request/review/:status/:requestId', async (req, res) => {
+    try {
+        const user = req.user;
+        const {requestId, status} = req.params;
+
+        if (!requestId || !status) {
+            return res.status(400).json({message: "requestId and status are required"});
+        }
+
+        const allowedStatus = ['accepted', 'rejected'];
+        if (!allowedStatus.includes(status)) {
+            return res.status(400).json({message: `Invalid status type ${status}`});
+        }
+
+        const connectionRequestData = await connectionRequest.findOne({
+            fromUserId: requestId,
+            toUserId: user._id,
+            status: 'intrested'
+        });
+
+        if (!connectionRequestData) {
+            return res.status(404).json({message: "Connection request not found or already reviewed"});
+        }
+
+        connectionRequestData.status = status;
+        const data = await connectionRequestData.save();
+
+        res.status(200).json({message: `You have ${status} the request from ${connectionRequestData.fromUserId}`, data});
+
+    } catch (error) {
+        console.log("error in reviewing request", error);
+        res.status(500).json({message: "Internal server error", error: error.message});
+        
+    }
+})
+
 module.exports = router;
